@@ -12,25 +12,42 @@ import type { ProficiencyAnchor } from '@/lib/types'
 const CATEGORY_OPTIONS = ['Backend', 'Frontend', 'DevOps', 'Data', 'Mobile', 'Security', 'AI/ML', 'Other'] as const
 type Category = typeof CATEGORY_OPTIONS[number]
 
+interface InitialValues {
+  skillId: string
+  skillName: string
+  taxonomyId: string | null
+  category: Category
+  proficiencyAnchor: ProficiencyAnchor | null
+  context: string
+  evidence: EvidenceItem[]
+  tags: string
+  isPrimary: boolean
+  availableToMentor: boolean
+}
+
+interface Props {
+  initialValues?: InitialValues
+}
+
 const EVIDENCE_POINTS: Record<string, number> = {
   github_pr: 20, shipped_product: 18, certificate: 15,
   github_repo: 10, article: 8, other: 5,
 }
 
-export default function SkillForm() {
+export default function SkillForm({ initialValues }: Props = {}) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [skillName, setSkillName] = useState('')
-  const [taxonomyId, setTaxonomyId] = useState<string | null>(null)
-  const [category, setCategory] = useState<Category>('Backend')
-  const [proficiencyAnchor, setProficiencyAnchor] = useState<ProficiencyAnchor | null>(null)
-  const [context, setContext] = useState('')
-  const [evidence, setEvidence] = useState<EvidenceItem[]>([])
-  const [tags, setTags] = useState('')
-  const [isPrimary, setIsPrimary] = useState(false)
-  const [availableToMentor, setAvailableToMentor] = useState(false)
+  const [skillName, setSkillName] = useState(initialValues?.skillName ?? '')
+  const [taxonomyId, setTaxonomyId] = useState<string | null>(initialValues?.taxonomyId ?? null)
+  const [category, setCategory] = useState<Category>(initialValues?.category ?? 'Backend')
+  const [proficiencyAnchor, setProficiencyAnchor] = useState<ProficiencyAnchor | null>(initialValues?.proficiencyAnchor ?? null)
+  const [context, setContext] = useState(initialValues?.context ?? '')
+  const [evidence, setEvidence] = useState<EvidenceItem[]>(initialValues?.evidence ?? [])
+  const [tags, setTags] = useState(initialValues?.tags ?? '')
+  const [isPrimary, setIsPrimary] = useState(initialValues?.isPrimary ?? false)
+  const [availableToMentor, setAvailableToMentor] = useState(initialValues?.availableToMentor ?? false)
 
   const evidencePoints = Math.min(
     evidence.reduce((sum, item) => sum + (item.url ? (EVIDENCE_POINTS[item.evidence_type] ?? 5) : 0), 0),
@@ -46,23 +63,40 @@ export default function SkillForm() {
     setSubmitting(true)
     setError(null)
 
-    const result = await submitSkill({
-      name: skillName.trim(),
-      category,
-      taxonomy_id: taxonomyId,
-      proficiency_anchor: proficiencyAnchor,
-      context: context.trim(),
-      evidence,
-      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-      is_primary: isPrimary,
-      available_to_mentor: availableToMentor,
-    })
+    let result: { error?: string }
+
+    if (initialValues?.skillId) {
+      const { updateSkill } = await import('@/app/actions/skills')
+      result = await updateSkill({
+        id: initialValues.skillId,
+        category,
+        taxonomy_id: taxonomyId,
+        proficiency_anchor: proficiencyAnchor,
+        context: context.trim(),
+        evidence,
+        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        is_primary: isPrimary,
+        available_to_mentor: availableToMentor,
+      })
+    } else {
+      result = await submitSkill({
+        name: skillName.trim(),
+        category,
+        taxonomy_id: taxonomyId,
+        proficiency_anchor: proficiencyAnchor,
+        context: context.trim(),
+        evidence,
+        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        is_primary: isPrimary,
+        available_to_mentor: availableToMentor,
+      })
+    }
 
     if (result?.error) {
       setError(result.error)
       setSubmitting(false)
     } else {
-      router.push('/skills')
+      router.push(initialValues?.skillId ? `/skills/${initialValues.skillId}` : '/skills')
       router.refresh()
     }
   }
@@ -76,11 +110,17 @@ export default function SkillForm() {
           <h2 className="text-base font-bold text-gray-900">What&apos;s the skill?</h2>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Skill name</label>
-            <SkillSearchInput
-              value={skillName}
-              taxonomyId={taxonomyId}
-              onChange={(name, tid) => { setSkillName(name); setTaxonomyId(tid) }}
-            />
+            {initialValues?.skillId ? (
+              <div className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-100 text-gray-500">
+                {skillName} <span className="text-xs text-gray-400 ml-2">(name cannot be changed)</span>
+              </div>
+            ) : (
+              <SkillSearchInput
+                value={skillName}
+                taxonomyId={taxonomyId}
+                onChange={(name, tid) => { setSkillName(name); setTaxonomyId(tid) }}
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
@@ -187,7 +227,7 @@ export default function SkillForm() {
           disabled={submitting}
           className="w-full py-3.5 rounded-xl bg-orange-500 text-white font-bold text-sm hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed elevation-1"
         >
-          {submitting ? 'Submitting...' : 'Add Skill →'}
+          {submitting ? 'Saving…' : initialValues?.skillId ? 'Save Changes →' : 'Add Skill →'}
         </button>
       </form>
 
