@@ -22,6 +22,17 @@ create policy "admins can delete edges" on public.skill_edges
     exists (select 1 from public.profiles where id::text = auth.uid()::text and role = 'admin')
   );
 
--- Fix: add role check constraint on profiles
-alter table public.profiles add constraint if not exists profiles_role_check
-  check (role in ('member', 'reviewer', 'admin'));
+-- Fix: add role check constraint on profiles (idempotent)
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'profiles_role_check'
+      and conrelid = 'public.profiles'::regclass
+  ) then
+    alter table public.profiles
+      add constraint profiles_role_check
+      check (role in ('member', 'reviewer', 'admin'));
+  end if;
+end;
+$$;
