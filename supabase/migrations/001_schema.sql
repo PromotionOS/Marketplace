@@ -25,14 +25,25 @@ create table public.skills (
   badge            text not null default 'none',
   created_at       timestamptz default now(),
   updated_at       timestamptz default now(),
-  search_vector    tsvector generated always as (
-    setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(replace(tags::text, ',', ' '), '')), 'A')
-  ) stored
+  search_vector    tsvector
 );
 
 create index skills_search_idx on public.skills using gin(search_vector);
+
+-- populate search_vector on insert/update
+create or replace function public.skills_search_vector_update() returns trigger as $$
+begin
+  NEW.search_vector :=
+    setweight(to_tsvector('english', coalesce(NEW.name, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(NEW.description, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(array_to_string(NEW.tags, ' '), '')), 'A');
+  return NEW;
+end;
+$$ language plpgsql;
+
+create trigger skills_search_vector_trigger
+  before insert or update of name, description, tags
+  on public.skills for each row execute function public.skills_search_vector_update();
 
 -- endorsements
 create table public.endorsements (
