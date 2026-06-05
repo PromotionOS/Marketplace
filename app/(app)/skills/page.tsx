@@ -22,7 +22,7 @@ async function SkillList({ searchParams }: Props) {
     })
     skills = (data as Skill[]) ?? []
   } else {
-    let query = supabase.from('skills').select('*').order('created_at', { ascending: false })
+    let query = supabase.from('skills').select('*').order('score', { ascending: false })
     if (level) query = query.eq('level', level)
     if (category) query = query.eq('category', category)
     const { data } = await query
@@ -41,17 +41,17 @@ async function SkillList({ searchParams }: Props) {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-6">
         <SearchBar resultCount={skills.length} />
-        <Link
-          href="/skills/new"
-          className="ml-4 px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 whitespace-nowrap"
-        >
-          + Add Skill
-        </Link>
       </div>
       {skills.length === 0 ? (
-        <p className="text-center text-gray-400 py-16">No skills found. Be the first to add one!</p>
+        <div className="text-center py-20">
+          <p className="text-5xl mb-4">🔍</p>
+          <p className="text-gray-400 font-medium">No skills found. Be the first to add one!</p>
+          <Link href="/skills/new" className="mt-4 inline-block text-orange-500 font-semibold hover:underline">
+            Add a skill →
+          </Link>
+        </div>
       ) : (
         <RealtimeSkillList initialSkills={skills} initialEndorsementCounts={endorsementCounts} />
       )}
@@ -62,8 +62,30 @@ async function SkillList({ searchParams }: Props) {
 export default function SkillsPage({ searchParams }: Props) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Skills</h1>
-      <Suspense fallback={<p className="text-gray-400">Loading…</p>}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Skills</h1>
+          <p className="text-gray-400 text-sm mt-1">Browse and discover skills across your org</p>
+        </div>
+        <Link
+          href="/skills/new"
+          className="px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-all elevation-1"
+        >
+          + Add Skill
+        </Link>
+      </div>
+
+      <Suspense fallback={
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl elevation-1 p-5 h-40 animate-pulse">
+              <div className="h-4 bg-orange-100 rounded w-2/3 mb-3" />
+              <div className="h-3 bg-gray-100 rounded w-1/2 mb-4" />
+              <div className="h-2 bg-orange-100 rounded-full" />
+            </div>
+          ))}
+        </div>
+      }>
         <SkillList searchParams={searchParams} />
       </Suspense>
     </div>
