@@ -1,42 +1,78 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { auth } from '@clerk/nextjs/server'
+import { revalidatePath } from 'next/cache'
 import { createSupabaseClient } from '@/lib/supabase'
+import type { EvidenceType, ProficiencyAnchor } from '@/lib/types'
 
-export async function submitSkill(formData: FormData) {
+interface EvidenceItem {
+  url: string
+  evidence_type: EvidenceType
+  title: string
+}
+
+interface SubmitSkillInput {
+  name: string
+  category: string
+  taxonomy_id: string | null
+  proficiency_anchor: ProficiencyAnchor
+  context: string
+  evidence: EvidenceItem[]
+  tags: string[]
+  is_primary: boolean
+  available_to_mentor: boolean
+}
+
+export async function submitSkill(input: SubmitSkillInput): Promise<{ error?: string }> {
   const { userId } = await auth()
-  if (!userId) throw new Error('Unauthorized')
-
-  const tags = ((formData.get('tags') as string) ?? '')
-    .split(',')
-    .map((t) => t.trim())
-    .filter(Boolean)
-
-  const evidenceUrls = ((formData.get('evidence_urls') as string) ?? '')
-    .split('\n')
-    .map((u) => u.trim())
-    .filter(Boolean)
+  if (!userId) return { error: 'Not authenticated' }
 
   const supabase = await createSupabaseClient()
-  const { error } = await supabase.from('skills').insert({
-    name: formData.get('name') as string,
-    description: formData.get('description') as string,
-    category: formData.get('category') as string,
-    level: formData.get('level') as string,
-    tags,
-    evidence_urls: evidenceUrls,
-    years_experience: formData.get('years_experience')
-      ? parseFloat(formData.get('years_experience') as string)
-      : null,
-    last_used_year: formData.get('last_used_year')
-      ? parseInt(formData.get('last_used_year') as string, 10)
-      : null,
-    submitted_by: userId,
-  })
 
-  if (error) throw new Error(error.message)
+  const levelMap: Record<ProficiencyAnchor, string> = {
+    follow_tutorials:     'beginner',
+    build_independently:  'proficient',
+    architect_and_mentor: 'expert',
+  }
+
+  const { data: skill, error: skillError } = await supabase
+    .from('skills')
+    .insert({
+      name:                input.name,
+      category:            input.category,
+      taxonomy_id:         input.taxonomy_id,
+      level:               levelMap[input.proficiency_anchor],
+      proficiency_anchor:  input.proficiency_anchor,
+      context:             input.context,
+      description:         input.context,  // populate required description field from context
+      tags:                input.tags,
+      is_primary:          input.is_primary,
+      available_to_mentor: input.available_to_mentor,
+      submitted_by:        userId,
+      evidence_urls:       [],
+    })
+    .select('id')
+    .single()
+
+  if (skillError) {
+    if (skillError.code === '23505') return { error: 'You already have a skill with this name.' }
+    return { error: skillError.message }
+  }
+
+  const validEvidence = input.evidence.filter((e) => e.url.trim().length > 0)
+  if (validEvidence.length > 0) {
+    await supabase.from('skill_evidence').insert(
+      validEvidence.map((e) => ({
+        skill_id:      skill.id,
+        url:           e.url.trim(),
+        evidence_type: e.evidence_type,
+        title:         e.title.trim() || null,
+      }))
+    )
+  }
+
   revalidatePath('/skills')
+  return {}
 }
 
 export async function endorseSkill(skillId: string) {
@@ -78,4 +114,3 @@ export async function rejectEdge(edgeId: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin/edges')
 }
-
