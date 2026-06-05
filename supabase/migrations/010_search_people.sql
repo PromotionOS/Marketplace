@@ -22,7 +22,17 @@ language sql stable as $$
     p.role,
     p.team,
     count(distinct s.id) as skill_count,
-    array_agg(distinct s.name order by s.score desc) filter (where s.id is not null) as top_skills
+    (
+      select array_agg(sk.name order by sk.score desc)
+      from (
+        select distinct name, max(score) as score
+        from public.skills
+        where submitted_by = p.id
+        group by name
+        order by max(score) desc
+        limit 5
+      ) sk
+    ) as top_skills
   from public.profiles p
   left join public.skills s on s.submitted_by = p.id
   where
