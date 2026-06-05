@@ -39,7 +39,7 @@ export default function RealtimeSkillList({ initialSkills, initialEndorsementCou
   }, [])
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 stagger">
       {skills.map((skill) => (
         <SkillCard key={skill.id} skill={skill} endorsementCount={endorsementCounts[skill.id] ?? 0} />
       ))}
