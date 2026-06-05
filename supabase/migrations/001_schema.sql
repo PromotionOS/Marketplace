@@ -28,7 +28,7 @@ create table public.skills (
   search_vector    tsvector generated always as (
     setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(array_to_string(tags, ' '), '')), 'A')
+    setweight(to_tsvector('english', coalesce(replace(tags::text, ',', ' '), '')), 'A')
   ) stored
 );
 
