@@ -1,4 +1,4 @@
-create extension if not exists pg_trgm;
+create extension if not exists pg_trgm with schema public;
 
 create index if not exists skills_trgm_idx on public.skills using gin(name gin_trgm_ops);
 
