@@ -19,10 +19,13 @@ export default function EndorseButton({ skillId, isOwner, endorsers, hasEndorsed
   async function handleEndorse() {
     if (isOwner || endorsed) return
     setPending(true)
+    setEndorsed(true)
+    setCount((c) => c + 1)
     try {
       await endorseSkill(skillId)
-      setEndorsed(true)
-      setCount((c) => c + 1)
+    } catch {
+      setEndorsed(false)
+      setCount((c) => c - 1)
     } finally {
       setPending(false)
     }

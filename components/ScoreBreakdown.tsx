@@ -51,7 +51,7 @@ export default function ScoreBreakdown({ skill, endorsementCount }: Props) {
   const recencyPts = (() => {
     if (!skill.last_used_year) return 0
     const diff = currentYear - skill.last_used_year
-    if (diff === 0) return 15
+    if (diff <= 1) return 15
     if (diff <= 2) return 10
     if (diff <= 3) return 5
     return 0
