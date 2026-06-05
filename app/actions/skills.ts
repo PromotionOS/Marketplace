@@ -79,18 +79,3 @@ export async function rejectEdge(edgeId: string) {
   revalidatePath('/admin/edges')
 }
 
-export async function postRequest(formData: FormData) {
-  const { userId } = await auth()
-  if (!userId) throw new Error('Unauthorized')
-
-  const supabase = await createSupabaseClient()
-  const { error } = await supabase.from('skill_requests').insert({
-    title: formData.get('title') as string,
-    description: (formData.get('description') as string) || null,
-    category: (formData.get('category') as string) || null,
-    requested_by: userId,
-  })
-
-  if (error) throw new Error(error.message)
-  revalidatePath('/requests')
-}

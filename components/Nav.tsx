@@ -7,7 +7,6 @@ import { UserButton } from '@clerk/nextjs'
 const links = [
   { href: '/skills', label: 'Skills' },
   { href: '/graph', label: 'Graph' },
-  { href: '/requests', label: 'Requests' },
 ]
 
 export default function Nav() {
@@ -32,7 +31,9 @@ export default function Nav() {
           </Link>
         ))}
       </div>
-      <UserButton />
+      <div className="py-3 pr-1">
+        <UserButton />
+      </div>
     </nav>
   )
 }
