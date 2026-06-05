@@ -6,6 +6,21 @@ import EndorseButton from '@/components/EndorseButton'
 import Link from 'next/link'
 import type { Profile, Skill } from '@/lib/types'
 
+const CATEGORY_META: Record<string, { bg: string; emoji: string }> = {
+  Backend:  { bg: '#e0f2fe', emoji: '⚙️' },
+  Frontend: { bg: '#ffe4e6', emoji: '🎨' },
+  DevOps:   { bg: '#fef3c7', emoji: '🚀' },
+  Data:     { bg: '#d1fae5', emoji: '📊' },
+  default:  { bg: '#f3f4f6', emoji: '💡' },
+}
+
+const BADGE_META: Record<string, { label: string; color: string; bg: string }> = {
+  none:       { label: '',           color: '',        bg: '' },
+  beginner:   { label: 'Beginner',   color: '#0369a1', bg: '#e0f2fe' },
+  proficient: { label: 'Proficient', color: '#7c3aed', bg: '#ede9fe' },
+  expert:     { label: '🏆 Expert',  color: '#b45309', bg: '#fef3c7' },
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }
@@ -15,102 +30,101 @@ export default async function SkillDetailPage({ params }: Props) {
   const { userId } = await auth()
   const supabase = await createSupabaseClient()
 
-  const { data: skill } = await supabase
-    .from('skills')
-    .select('*')
-    .eq('id', id)
-    .single()
-
+  const { data: skill } = await supabase.from('skills').select('*').eq('id', id).single()
   if (!skill) notFound()
 
   const [{ data: endorsements }, { data: submitter }] = await Promise.all([
-    supabase
-      .from('endorsements')
-      .select('*, profiles:endorsed_by(id, full_name, avatar_url)')
-      .eq('skill_id', skill.id),
-    supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url, team')
-      .eq('id', skill.submitted_by)
-      .single(),
+    supabase.from('endorsements').select('*, profiles:endorsed_by(id, full_name, avatar_url)').eq('skill_id', skill.id),
+    supabase.from('profiles').select('id, full_name, avatar_url, team').eq('id', skill.submitted_by).single(),
   ])
 
-  type EndorsementWithProfile = {
-    id: string
-    profiles: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
-  }
-
+  type EndorsementWithProfile = { id: string; profiles: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> }
   const endorserProfiles = ((endorsements ?? []) as EndorsementWithProfile[]).map((e) => e.profiles)
   const hasEndorsed = endorserProfiles.some((p) => p.id === userId)
   const isOwner = skill.submitted_by === userId
 
+  const cat = CATEGORY_META[skill.category] ?? CATEGORY_META.default
+  const badge = BADGE_META[(skill as Skill).badge]
+
   return (
-    <div className="max-w-3xl">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{skill.name}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {skill.category} ·{' '}
-            <span className="capitalize">{skill.level}</span>
-            {submitter && (
-              <>
-                {' · '}
-                <Link href={`/profile/${(submitter as Pick<Profile, 'id' | 'full_name'>).id}`} className="hover:text-orange-600">
-                  {(submitter as Pick<Profile, 'id' | 'full_name'>).full_name ?? 'Unknown'}
-                </Link>
-              </>
-            )}
-          </p>
+    <div className="max-w-4xl">
+      <Link href="/skills" className="text-sm text-gray-400 hover:text-orange-500 transition-colors mb-6 inline-block">
+        ← Back to Skills
+      </Link>
+
+      {/* Hero card */}
+      <div className="bg-white rounded-2xl elevation-2 p-6 mb-6">
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0" style={{ background: cat.bg }}>
+            {cat.emoji}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-black text-gray-900">{skill.name}</h1>
+                <p className="text-sm text-gray-400 mt-1">
+                  {skill.category} · <span className="capitalize">{skill.level}</span>
+                  {submitter && (
+                    <> · <Link href={`/profile/${(submitter as Pick<Profile, 'id' | 'full_name'>).id}`} className="text-orange-500 hover:underline">
+                      {(submitter as Pick<Profile, 'id' | 'full_name'>).full_name ?? 'Unknown'}
+                    </Link></>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="text-center">
+                  <p className="text-2xl font-black text-orange-500">{(skill as Skill).score}</p>
+                  <p className="text-xs text-gray-400">score</p>
+                </div>
+                {(skill as Skill).badge !== 'none' && badge.label && (
+                  <span className="text-sm px-3 py-1.5 rounded-xl font-bold" style={{ color: badge.color, background: badge.bg }}>
+                    {badge.label}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="mt-4">
+              <EndorseButton skillId={skill.id} isOwner={isOwner} endorsers={endorserProfiles} hasEndorsed={hasEndorsed} />
+            </div>
+          </div>
         </div>
-        {(skill as Skill).badge !== 'none' && (
-          <span className="text-sm px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full capitalize font-medium">
-            {(skill as Skill).badge}
-          </span>
-        )}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <p className="text-gray-700 whitespace-pre-wrap">{skill.description}</p>
-        {(skill as Skill).tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {(skill as Skill).tags.map((tag: string) => (
-              <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                {tag}
-              </span>
-            ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-5">
+          <div className="bg-white rounded-2xl elevation-1 p-6">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Description</h2>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{skill.description}</p>
+            {(skill as Skill).tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {(skill as Skill).tags.map((tag: string) => (
+                  <span key={tag} className="text-xs bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-medium">{tag}</span>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-        {(skill as Skill).evidence_urls.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Evidence</p>
-            <ul className="space-y-1">
-              {(skill as Skill).evidence_urls.map((url: string) => (
-                <li key={url}>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-orange-600 hover:underline break-all"
-                  >
-                    {url}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
 
-      <div className="mb-6">
-        <EndorseButton
-          skillId={skill.id}
-          isOwner={isOwner}
-          endorsers={endorserProfiles}
-          hasEndorsed={hasEndorsed}
-        />
-      </div>
+          {(skill as Skill).evidence_urls.length > 0 && (
+            <div className="bg-white rounded-2xl elevation-1 p-6">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Evidence</h2>
+              <ul className="space-y-2">
+                {(skill as Skill).evidence_urls.map((url: string) => (
+                  <li key={url}>
+                    <a href={url} target="_blank" rel="noopener noreferrer"
+                      className="text-sm text-orange-500 hover:text-orange-600 hover:underline break-all flex items-center gap-2">
+                      <span>🔗</span> {url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
 
-      <ScoreBreakdown skill={skill as Skill} endorsementCount={endorserProfiles.length} />
+        <div>
+          <ScoreBreakdown skill={skill as Skill} endorsementCount={endorserProfiles.length} />
+        </div>
+      </div>
     </div>
   )
 }
