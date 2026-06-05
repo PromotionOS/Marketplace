@@ -1,10 +1,9 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { currentUser } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 const isPublic = createRouteMatcher(['/sign-in(.*)', '/unauthorized'])
 
-export default clerkMiddleware(async (auth, req) => {
+export const proxy = clerkMiddleware(async (auth, req) => {
   if (!isPublic(req)) {
     await auth.protect()
     const user = await currentUser()
@@ -15,4 +14,10 @@ export default clerkMiddleware(async (auth, req) => {
   }
 })
 
-export const config = { matcher: ['/((?!_next|.*\\..*).*)'] }
+export const config = {
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+    '/__clerk/(.*)',
+  ],
+}
