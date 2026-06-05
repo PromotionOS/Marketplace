@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 
 const links = [
-  { href: '/skills', label: 'Skills' },
-  { href: '/graph', label: 'Graph' },
+  { href: '/skills',  label: 'Skills' },
+  { href: '/people',  label: 'People' },
+  { href: '/graph',   label: 'Graph' },
 ]
 
 export default function Nav() {

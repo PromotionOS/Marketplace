@@ -39,6 +39,14 @@ export default async function SkillDetailPage({ params }: Props) {
     supabase.from('skill_evidence').select('evidence_type, evidence_type_weights!inner(points)').eq('skill_id', id),
   ])
 
+  const { data: otherHolders } = await supabase
+    .from('skills')
+    .select('submitted_by, score, level, profiles:submitted_by(id, full_name, avatar_url, team)')
+    .eq('name', skill.name)
+    .neq('submitted_by', skill.submitted_by)
+    .order('score', { ascending: false })
+    .limit(8)
+
   const evidencePoints = (evidenceData ?? []).reduce((sum: number, e: { evidence_type_weights: { points: number }[] | { points: number } | null }) => {
     const w = e.evidence_type_weights
     const pts = Array.isArray(w) ? (w[0]?.points ?? 0) : (w?.points ?? 0)
@@ -126,6 +134,44 @@ export default async function SkillDetailPage({ params }: Props) {
               </ul>
             </div>
           )}
+
+          {otherHolders && otherHolders.length > 0 && (() => {
+            type HolderProfile = { id: string; full_name: string | null; avatar_url: string | null; team: string | null }
+            type Holder = { submitted_by: string; score: number; level: string; profiles: HolderProfile }
+            const holders = otherHolders as unknown as Holder[]
+            return (
+              <div className="bg-white rounded-2xl elevation-1 p-6">
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                  Others with this skill ({holders.length})
+                </h2>
+                <div className="space-y-2">
+                  {holders.map((holder) => (
+                    <Link key={holder.submitted_by} href={`/profile/${holder.profiles.id}`}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50 transition-colors">
+                      {holder.profiles.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={holder.profiles.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                          <span className="text-xs font-bold text-orange-500">
+                            {(holder.profiles.full_name ?? '?')[0].toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{holder.profiles.full_name ?? 'Unknown'}</p>
+                        {holder.profiles.team && <p className="text-xs text-gray-400">{holder.profiles.team}</p>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-black text-orange-500">{holder.score}/100</p>
+                        <p className="text-xs text-gray-400 capitalize">{holder.level}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         <div>
