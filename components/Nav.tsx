@@ -7,7 +7,6 @@ import { UserButton } from '@clerk/nextjs'
 const links = [
   { href: '/skills', label: 'Skills' },
   { href: '/graph', label: 'Graph' },
-  { href: '/requests', label: 'Requests' },
 ]
 
 export default function Nav() {
