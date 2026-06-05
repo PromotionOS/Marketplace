@@ -2,23 +2,31 @@ import type { Skill } from '@/lib/types'
 
 interface CriterionProps {
   label: string
+  description: string
   earned: number
   max: number
+  color?: string
 }
 
-function Criterion({ label, earned, max }: CriterionProps) {
+function Criterion({ label, description, earned, max, color = '#f97316' }: CriterionProps) {
+  const pct = max > 0 ? (earned / max) * 100 : 0
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-600 w-40 shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <div>
+          <span className="text-sm font-semibold text-gray-700">{label}</span>
+          <p className="text-xs text-gray-400">{description}</p>
+        </div>
+        <span className="text-sm font-black ml-3 shrink-0" style={{ color }}>
+          {earned}/{max}
+        </span>
+      </div>
+      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-orange-400 rounded-full"
-          style={{ width: `${(earned / max) * 100}%` }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}99)` }}
         />
       </div>
-      <span className="text-sm font-semibold text-gray-700 w-16 text-right">
-        {earned}/{max}
-      </span>
     </div>
   )
 }
@@ -26,56 +34,79 @@ function Criterion({ label, earned, max }: CriterionProps) {
 interface Props {
   skill: Skill
   endorsementCount: number
+  evidencePoints?: number
 }
 
-export default function ScoreBreakdown({ skill, endorsementCount }: Props) {
-  const currentYear = new Date().getFullYear()
+export default function ScoreBreakdown({ skill, endorsementCount, evidencePoints = 0 }: Props) {
+  const proficiencyPts =
+    skill.proficiency_anchor === 'architect_and_mentor' ? 30
+    : skill.proficiency_anchor === 'build_independently' ? 20
+    : skill.proficiency_anchor === 'follow_tutorials' ? 10
+    : skill.level === 'expert' ? 25
+    : skill.level === 'proficient' ? 15
+    : 8
 
-  const descPts =
-    skill.description.length > 150 ? 20
-    : skill.description.length >= 50 ? 10
-    : 0
-
-  const evidencePts =
-    skill.evidence_urls.length >= 3 ? 25
-    : skill.evidence_urls.length === 2 ? 18
-    : skill.evidence_urls.length === 1 ? 10
-    : 0
-
-  const yearsPts =
-    (skill.years_experience ?? 0) >= 5 ? 15
-    : (skill.years_experience ?? 0) >= 3 ? 10
-    : (skill.years_experience ?? 0) >= 1 ? 5
-    : 0
-
-  const recencyPts = (() => {
-    if (!skill.last_used_year) return 0
-    const diff = currentYear - skill.last_used_year
-    if (diff <= 1) return 15
-    if (diff <= 2) return 10
-    if (diff <= 3) return 5
-    return 0
-  })()
+  const cappedEvidence = Math.min(evidencePoints, 35)
 
   const endorsePts =
-    endorsementCount >= 3 ? 25
-    : endorsementCount === 2 ? 18
-    : endorsementCount === 1 ? 10
+    endorsementCount >= 5 ? 25
+    : endorsementCount >= 3 ? 20
+    : endorsementCount >= 2 ? 15
+    : endorsementCount >= 1 ? 8
     : 0
 
+  const contextPts =
+    !skill.context || skill.context.length === 0 ? 0
+    : skill.context.length >= 50 ? 10
+    : 5
+
+  const PROFICIENCY_LABEL: Record<string, string> = {
+    architect_and_mentor: '🔥 Architect & Mentor',
+    build_independently:  '⚡ Builds Independently',
+    follow_tutorials:     '🌱 Following Tutorials',
+  }
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-5">
-      <h2 className="text-sm font-semibold text-gray-900 mb-4">Score Breakdown</h2>
-      <div className="space-y-3">
-        <Criterion label="Description quality" earned={descPts} max={20} />
-        <Criterion label="Evidence links" earned={evidencePts} max={25} />
-        <Criterion label="Years of experience" earned={yearsPts} max={15} />
-        <Criterion label="Recency" earned={recencyPts} max={15} />
-        <Criterion label="Endorsements" earned={endorsePts} max={25} />
+    <div className="bg-white rounded-2xl elevation-1 p-5">
+      <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5">Score Breakdown</h2>
+
+      <div className="space-y-5">
+        <Criterion
+          label="Proficiency Level"
+          description={skill.proficiency_anchor ? PROFICIENCY_LABEL[skill.proficiency_anchor] : `Self-assessed: ${skill.level}`}
+          earned={proficiencyPts}
+          max={30}
+          color="#f97316"
+        />
+        <Criterion
+          label="Evidence Quality"
+          description="Typed links — PRs, certs, shipped products"
+          earned={cappedEvidence}
+          max={35}
+          color="#0ea5e9"
+        />
+        <Criterion
+          label="Endorsements"
+          description={`${endorsementCount} peer${endorsementCount !== 1 ? 's' : ''} verified this skill`}
+          earned={endorsePts}
+          max={25}
+          color="#10b981"
+        />
+        <Criterion
+          label="Context"
+          description="What you've built with it"
+          earned={contextPts}
+          max={10}
+          color="#7c3aed"
+        />
       </div>
-      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-900">Total</span>
-        <span className="text-lg font-bold text-orange-600">{skill.score}/100</span>
+
+      <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+        <span className="text-sm font-bold text-gray-900">Total Score</span>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-black text-orange-500">{skill.score}</span>
+          <span className="text-sm text-gray-400">/100</span>
+        </div>
       </div>
     </div>
   )
