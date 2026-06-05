@@ -55,7 +55,7 @@ export default async function SkillDetailPage({ params }: Props) {
             {submitter && (
               <>
                 {' · '}
-                <Link href={`/profile/${(submitter as Pick<Profile, 'id' | 'full_name'>).id}`} className="hover:text-indigo-600">
+                <Link href={`/profile/${(submitter as Pick<Profile, 'id' | 'full_name'>).id}`} className="hover:text-orange-600">
                   {(submitter as Pick<Profile, 'id' | 'full_name'>).full_name ?? 'Unknown'}
                 </Link>
               </>
@@ -90,7 +90,7 @@ export default async function SkillDetailPage({ params }: Props) {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-indigo-600 hover:underline break-all"
+                    className="text-sm text-orange-600 hover:underline break-all"
                   >
                     {url}
                   </a>

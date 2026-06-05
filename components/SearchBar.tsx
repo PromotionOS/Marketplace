@@ -37,12 +37,12 @@ export default function SearchBar({ resultCount }: Props) {
         placeholder="Search skills..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
       />
       <select
         value={level}
         onChange={(e) => setLevel(e.target.value)}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
       >
         <option value="">All levels</option>
         {LEVELS.map((l) => (
@@ -52,7 +52,7 @@ export default function SearchBar({ resultCount }: Props) {
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
       >
         <option value="">All categories</option>
         {CATEGORIES.map((c) => (

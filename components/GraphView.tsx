@@ -16,11 +16,11 @@ import type { Skill, SkillEdge } from '@/lib/types'
 import { approveEdge, rejectEdge } from '@/app/actions/skills'
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Backend: '#6366f1',
-  Frontend: '#ec4899',
-  DevOps: '#f97316',
-  Data: '#22c55e',
-  default: '#94a3b8',
+  Backend: '#f97316',
+  Frontend: '#f43f5e',
+  DevOps: '#f59e0b',
+  Data: '#10b981',
+  default: '#9ca3af',
 }
 
 const EDGE_COLORS: Record<string, string> = {
@@ -128,7 +128,7 @@ export default function GraphView({ skills, edges, pendingEdges = [], isAdmin = 
               <h3 className="font-semibold text-gray-900">{selectedSkill.name}</h3>
               <p className="text-sm text-gray-500 mt-1">{selectedSkill.category} · {selectedSkill.level}</p>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full capitalize">
+                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full capitalize">
                   {selectedSkill.badge}
                 </span>
                 <span className="text-xs text-gray-500">Score: {selectedSkill.score}</span>
@@ -140,7 +140,7 @@ export default function GraphView({ skills, edges, pendingEdges = [], isAdmin = 
                     {neighbours.map((n) => (
                       <li
                         key={n.id}
-                        className="text-sm text-gray-700 cursor-pointer hover:text-indigo-600"
+                        className="text-sm text-gray-700 cursor-pointer hover:text-orange-600"
                         onClick={() => setSelectedSkill(n)}
                       >
                         {n.name}

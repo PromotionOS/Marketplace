@@ -41,8 +41,8 @@ export default async function ProfilePage({ params }: Props) {
             className="w-16 h-16 rounded-full object-cover"
           />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-            <span className="text-2xl font-bold text-indigo-600">
+          <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+            <span className="text-2xl font-bold text-orange-600">
               {((profile as Profile).full_name ?? 'U')[0].toUpperCase()}
             </span>
           </div>
@@ -63,12 +63,12 @@ export default async function ProfilePage({ params }: Props) {
           .filter(([badge]) => badge !== 'none')
           .map(([badge, count]) => (
             <div key={badge} className="text-center">
-              <p className="text-2xl font-bold text-indigo-600">{count}</p>
+              <p className="text-2xl font-bold text-orange-600">{count}</p>
               <p className="text-xs text-gray-500 capitalize">{badge}</p>
             </div>
           ))}
         <div className="text-center">
-          <p className="text-2xl font-bold text-indigo-600">{skills?.length ?? 0}</p>
+          <p className="text-2xl font-bold text-orange-600">{skills?.length ?? 0}</p>
           <p className="text-xs text-gray-500">Total skills</p>
         </div>
       </div>

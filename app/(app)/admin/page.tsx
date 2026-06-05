@@ -35,18 +35,18 @@ export default async function AdminPage() {
           { label: 'Pending Edges', value: pendingEdgeCount ?? 0 },
         ].map((stat) => (
           <div key={stat.label} className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-            <p className="text-3xl font-bold text-indigo-600">{stat.value}</p>
+            <p className="text-3xl font-bold text-orange-600">{stat.value}</p>
             <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
           </div>
         ))}
       </div>
       <Link
         href="/admin/edges"
-        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+        className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600"
       >
         Review AI-Suggested Edges
         {(pendingEdgeCount ?? 0) > 0 && (
-          <span className="bg-white text-indigo-600 text-xs font-bold px-1.5 py-0.5 rounded-full">
+          <span className="bg-white text-orange-600 text-xs font-bold px-1.5 py-0.5 rounded-full">
             {pendingEdgeCount}
           </span>
         )}

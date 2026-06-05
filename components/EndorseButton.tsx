@@ -41,7 +41,7 @@ export default function EndorseButton({ skillId, isOwner, endorsers, hasEndorsed
             ? 'bg-green-100 text-green-700 cursor-default'
             : isOwner
             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50'
+            : 'bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50'
         }`}
       >
         {endorsed ? 'Endorsed' : pending ? 'Endorsing…' : 'Endorse'}
@@ -52,14 +52,14 @@ export default function EndorseButton({ skillId, isOwner, endorsers, hasEndorsed
           {endorsers.slice(0, 5).map((e) => (
             <div
               key={e.id}
-              className="w-7 h-7 rounded-full bg-indigo-200 border-2 border-white flex items-center justify-center overflow-hidden"
+              className="w-7 h-7 rounded-full bg-orange-200 border-2 border-white flex items-center justify-center overflow-hidden"
               title={e.full_name ?? 'Unknown'}
             >
               {e.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={e.avatar_url} alt={e.full_name ?? ''} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-xs text-indigo-700 font-semibold">
+                <span className="text-xs text-orange-700 font-semibold">
                   {(e.full_name ?? '?')[0].toUpperCase()}
                 </span>
               )}
