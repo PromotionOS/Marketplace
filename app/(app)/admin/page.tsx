@@ -58,6 +58,15 @@ export default async function AdminPage() {
           )}
         </Link>
       </div>
+
+      <div className="bg-white rounded-2xl elevation-1 p-6 mt-4">
+        <h2 className="font-bold text-gray-900 mb-1">Skill Graph Editor</h2>
+        <p className="text-sm text-gray-400 mb-4">Visually manage skill relationships and approve AI-suggested connections</p>
+        <Link href="/admin/graph"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-all">
+          Open Graph Editor
+        </Link>
+      </div>
     </div>
   )
 }
