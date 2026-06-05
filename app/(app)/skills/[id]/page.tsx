@@ -33,10 +33,17 @@ export default async function SkillDetailPage({ params }: Props) {
   const { data: skill } = await supabase.from('skills').select('*').eq('id', id).single()
   if (!skill) notFound()
 
-  const [{ data: endorsements }, { data: submitter }] = await Promise.all([
+  const [{ data: endorsements }, { data: submitter }, { data: evidenceData }] = await Promise.all([
     supabase.from('endorsements').select('*, profiles:endorsed_by(id, full_name, avatar_url)').eq('skill_id', skill.id),
     supabase.from('profiles').select('id, full_name, avatar_url, team').eq('id', skill.submitted_by).single(),
+    supabase.from('skill_evidence').select('evidence_type, evidence_type_weights!inner(points)').eq('skill_id', id),
   ])
+
+  const evidencePoints = (evidenceData ?? []).reduce((sum: number, e: { evidence_type_weights: { points: number }[] | { points: number } | null }) => {
+    const w = e.evidence_type_weights
+    const pts = Array.isArray(w) ? (w[0]?.points ?? 0) : (w?.points ?? 0)
+    return sum + pts
+  }, 0)
 
   type EndorsementWithProfile = { id: string; profiles: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> }
   const endorserProfiles = ((endorsements ?? []) as EndorsementWithProfile[]).map((e) => e.profiles)
@@ -122,7 +129,7 @@ export default async function SkillDetailPage({ params }: Props) {
         </div>
 
         <div>
-          <ScoreBreakdown skill={skill as Skill} endorsementCount={endorserProfiles.length} />
+          <ScoreBreakdown skill={skill as Skill} endorsementCount={endorserProfiles.length} evidencePoints={evidencePoints} />
         </div>
       </div>
     </div>
