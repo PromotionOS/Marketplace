@@ -1,19 +1,18 @@
-create extension if not exists vector;
+-- Set search_path so the vector type and operators resolve from extensions schema
+set search_path to public, extensions;
 
-alter table public.skills add column if not exists embedding vector(768);
-
-create index if not exists skills_embedding_idx
-  on public.skills using ivfflat (embedding vector_cosine_ops)
-  with (lists = 100);
+alter table public.skills add column if not exists embedding extensions.vector(768);
 
 create or replace function public.match_skills(
-  query_embedding vector(768),
+  query_embedding extensions.vector(768),
   match_threshold float,
   match_count     int,
   exclude_id      uuid
 )
 returns table(id uuid, name text, similarity float)
-language sql stable as $$
+language sql stable
+set search_path = public, extensions
+as $$
   select id, name, 1 - (embedding <=> query_embedding) as similarity
   from public.skills
   where id != exclude_id

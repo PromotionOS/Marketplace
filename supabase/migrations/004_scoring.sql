@@ -1,5 +1,5 @@
 create or replace function public.compute_skill_score(skill_id uuid)
-returns int language plpgsql as $$
+returns int language plpgsql security definer as $$
 declare
   s                 public.skills%rowtype;
   endorsement_count int;
@@ -37,7 +37,7 @@ begin
 
   recency_pts := case
     when s.last_used_year is null                        then 0
-    when current_year - s.last_used_year = 0             then 15
+    when current_year - s.last_used_year <= 1            then 15
     when current_year - s.last_used_year <= 2            then 10
     when current_year - s.last_used_year <= 3            then 5
     else 0
@@ -59,7 +59,11 @@ begin
     else 'none'
   end;
 
+  -- disable triggers temporarily to prevent recursive firing
+  set local session_replication_role = replica;
   update public.skills set score = total, badge = badge_val, updated_at = now() where id = skill_id;
+  set local session_replication_role = default;
+
   return total;
 end;
 $$;
