@@ -87,6 +87,14 @@ export default async function SkillDetailPage({ params }: Props) {
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                {isOwner && (
+                  <Link
+                    href={`/skills/${skill.id}/edit`}
+                    className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg text-gray-500 hover:border-orange-300 hover:text-orange-500 transition-colors font-medium"
+                  >
+                    Edit
+                  </Link>
+                )}
                 <div className="text-center">
                   <p className="text-2xl font-black text-orange-500">{(skill as Skill).score}</p>
                   <p className="text-xs text-gray-400">score</p>

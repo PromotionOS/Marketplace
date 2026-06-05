@@ -75,6 +75,69 @@ export async function submitSkill(input: SubmitSkillInput): Promise<{ error?: st
   return {}
 }
 
+interface UpdateSkillInput {
+  id: string
+  category: string
+  taxonomy_id: string | null
+  proficiency_anchor: ProficiencyAnchor
+  context: string
+  evidence: EvidenceItem[]
+  tags: string[]
+  is_primary: boolean
+  available_to_mentor: boolean
+}
+
+export async function updateSkill(input: UpdateSkillInput): Promise<{ error?: string }> {
+  const { userId } = await auth()
+  if (!userId) return { error: 'Not authenticated' }
+
+  const supabase = await createSupabaseClient()
+
+  const levelMap: Record<ProficiencyAnchor, string> = {
+    follow_tutorials:     'beginner',
+    build_independently:  'proficient',
+    architect_and_mentor: 'expert',
+  }
+
+  const { error: skillError } = await supabase
+    .from('skills')
+    .update({
+      category:            input.category,
+      taxonomy_id:         input.taxonomy_id,
+      level:               levelMap[input.proficiency_anchor],
+      proficiency_anchor:  input.proficiency_anchor,
+      context:             input.context,
+      description:         input.context,
+      tags:                input.tags,
+      is_primary:          input.is_primary,
+      available_to_mentor: input.available_to_mentor,
+      updated_at:          new Date().toISOString(),
+    })
+    .eq('id', input.id)
+    .eq('submitted_by', userId)
+
+  if (skillError) return { error: skillError.message }
+
+  // Replace evidence: delete old, insert new
+  await supabase.from('skill_evidence').delete().eq('skill_id', input.id)
+
+  const validEvidence = input.evidence.filter((e) => e.url.trim().length > 0)
+  if (validEvidence.length > 0) {
+    await supabase.from('skill_evidence').insert(
+      validEvidence.map((e) => ({
+        skill_id:      input.id,
+        url:           e.url.trim(),
+        evidence_type: e.evidence_type,
+        title:         e.title.trim() || null,
+      }))
+    )
+  }
+
+  revalidatePath(`/skills/${input.id}`)
+  revalidatePath('/skills')
+  return {}
+}
+
 export async function endorseSkill(skillId: string) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
