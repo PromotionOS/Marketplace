@@ -1,10 +1,7 @@
-create extension if not exists vector;
+-- vector extension is pre-installed by Supabase in the extensions schema
+-- just add the column and function; index is created after data exists
 
 alter table public.skills add column if not exists embedding vector(768);
-
-create index if not exists skills_embedding_idx
-  on public.skills using ivfflat (embedding vector_cosine_ops)
-  with (lists = 100);
 
 create or replace function public.match_skills(
   query_embedding vector(768),
