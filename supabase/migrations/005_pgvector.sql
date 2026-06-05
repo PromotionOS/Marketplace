@@ -1,10 +1,7 @@
--- vector extension is pre-installed by Supabase in the extensions schema
--- just add the column and function; index is created after data exists
-
-alter table public.skills add column if not exists embedding vector(768);
+alter table public.skills add column if not exists embedding extensions.vector(768);
 
 create or replace function public.match_skills(
-  query_embedding vector(768),
+  query_embedding extensions.vector(768),
   match_threshold float,
   match_count     int,
   exclude_id      uuid
