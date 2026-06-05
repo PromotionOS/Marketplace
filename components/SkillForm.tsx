@@ -6,14 +6,20 @@ import StarterKit from '@tiptap/starter-kit'
 import { submitSkill } from '@/app/actions/skills'
 import { useRouter } from 'next/navigation'
 import LiveScorePreview from '@/components/LiveScorePreview'
+import CustomSelect from '@/components/CustomSelect'
 
-const CATEGORIES = [
-  { value: 'Backend',  emoji: '⚙️' },
-  { value: 'Frontend', emoji: '🎨' },
-  { value: 'DevOps',   emoji: '🚀' },
-  { value: 'Data',     emoji: '📊' },
+const CATEGORY_OPTIONS = [
+  { value: 'Backend',  label: '⚙️ Backend' },
+  { value: 'Frontend', label: '🎨 Frontend' },
+  { value: 'DevOps',   label: '🚀 DevOps' },
+  { value: 'Data',     label: '📊 Data' },
 ]
-const LEVELS = ['beginner', 'proficient', 'expert']
+
+const LEVEL_OPTIONS = [
+  { value: 'beginner',   label: 'Beginner' },
+  { value: 'proficient', label: 'Proficient' },
+  { value: 'expert',     label: 'Expert' },
+]
 
 export default function SkillForm() {
   const router = useRouter()
@@ -27,6 +33,8 @@ export default function SkillForm() {
   const [descText, setDescText] = useState('')
   const [yearsExp, setYearsExp] = useState<number | null>(null)
   const [lastYear, setLastYear] = useState<number | null>(null)
+  const [category, setCategory] = useState('')
+  const [level, setLevel] = useState('')
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -61,6 +69,10 @@ export default function SkillForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (!category || !level) {
+      setError('Please select a category and level')
+      return
+    }
     setSubmitting(true)
     setError(null)
     const fd = new FormData(e.currentTarget)
@@ -112,29 +124,24 @@ export default function SkillForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-              <select
-                name="category"
-                required
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50"
-              >
-                <option value="">Select…</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.emoji} {c.value}</option>
-                ))}
-              </select>
+              <input type="hidden" name="category" value={category} />
+              <CustomSelect
+                value={category}
+                onChange={setCategory}
+                options={CATEGORY_OPTIONS}
+                placeholder="Select category"
+              />
+              {!category && <p className="text-xs text-red-400 mt-1 hidden peer-invalid:block" />}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Level *</label>
-              <select
-                name="level"
-                required
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50"
-              >
-                <option value="">Select…</option>
-                {LEVELS.map((l) => (
-                  <option key={l} value={l} className="capitalize">{l}</option>
-                ))}
-              </select>
+              <input type="hidden" name="level" value={level} />
+              <CustomSelect
+                value={level}
+                onChange={setLevel}
+                options={LEVEL_OPTIONS}
+                placeholder="Select level"
+              />
             </div>
           </div>
         </div>

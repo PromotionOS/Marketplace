@@ -32,7 +32,9 @@ export default function Nav() {
           </Link>
         ))}
       </div>
-      <UserButton />
+      <div className="py-3 pr-1">
+        <UserButton />
+      </div>
     </nav>
   )
 }
