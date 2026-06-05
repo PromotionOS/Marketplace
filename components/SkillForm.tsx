@@ -80,13 +80,13 @@ export default function SkillForm() {
         <input
           name="name"
           required
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-        <div className="rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-indigo-500">
+        <div className="rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-orange-400">
           <EditorContent editor={editor} />
         </div>
         <p className="text-xs text-gray-400 mt-1">50+ chars for score points, 150+ for full points</p>
@@ -98,7 +98,7 @@ export default function SkillForm() {
           <select
             name="category"
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
             <option value="">Select category</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -109,7 +109,7 @@ export default function SkillForm() {
           <select
             name="level"
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
             <option value="">Select level</option>
             {LEVELS.map((l) => <option key={l} value={l} className="capitalize">{l}</option>)}
@@ -126,7 +126,7 @@ export default function SkillForm() {
             min="0"
             max="50"
             step="0.5"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
         </div>
         <div>
@@ -136,7 +136,7 @@ export default function SkillForm() {
             type="number"
             min="2000"
             max={new Date().getFullYear()}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function SkillForm() {
           {tags.map((t) => (
             <span
               key={t}
-              className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full"
+              className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full"
             >
               {t}
               <button type="button" onClick={() => removeTag(t)} className="hover:text-red-500">×</button>
@@ -160,7 +160,7 @@ export default function SkillForm() {
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
             placeholder="Add a tag"
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
           <button
             type="button"
@@ -182,14 +182,14 @@ export default function SkillForm() {
               onChange={(e) => updateEvidenceUrl(i, e.target.value)}
               placeholder="https://github.com/..."
               type="url"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           ))}
         </div>
         <button
           type="button"
           onClick={addEvidenceUrl}
-          className="mt-2 text-sm text-indigo-600 hover:underline"
+          className="mt-2 text-sm text-orange-600 hover:underline"
         >
           + Add another link
         </button>
@@ -198,7 +198,7 @@ export default function SkillForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+        className="w-full py-2.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors"
       >
         {submitting ? 'Submitting…' : 'Submit Skill'}
       </button>

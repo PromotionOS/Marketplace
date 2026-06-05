@@ -18,7 +18,7 @@ export default async function RequestsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Skill Requests</h1>
         <Link
           href="/requests/new"
-          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
+          className="px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600"
         >
           + Post Request
         </Link>

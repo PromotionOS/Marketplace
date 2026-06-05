@@ -38,7 +38,7 @@ export default function NewRequestPage() {
           <input
             name="title"
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
         </div>
         <div>
@@ -46,14 +46,14 @@ export default function NewRequestPage() {
           <textarea
             name="description"
             rows={4}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
           <select
             name="category"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
             <option value="">Select category</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -62,7 +62,7 @@ export default function NewRequestPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50"
+          className="w-full py-2.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50"
         >
           {submitting ? 'Posting…' : 'Post Request'}
         </button>

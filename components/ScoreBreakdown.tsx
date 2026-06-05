@@ -12,7 +12,7 @@ function Criterion({ label, earned, max }: CriterionProps) {
       <span className="text-sm text-gray-600 w-40 shrink-0">{label}</span>
       <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-indigo-500 rounded-full"
+          className="h-full bg-orange-400 rounded-full"
           style={{ width: `${(earned / max) * 100}%` }}
         />
       </div>
@@ -75,7 +75,7 @@ export default function ScoreBreakdown({ skill, endorsementCount }: Props) {
       </div>
       <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
         <span className="text-sm font-semibold text-gray-900">Total</span>
-        <span className="text-lg font-bold text-indigo-600">{skill.score}/100</span>
+        <span className="text-lg font-bold text-orange-600">{skill.score}/100</span>
       </div>
     </div>
   )

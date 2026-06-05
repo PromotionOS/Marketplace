@@ -15,10 +15,10 @@ const LEVEL_STYLES: Record<string, string> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Backend: 'border-l-blue-500',
-  Frontend: 'border-l-pink-500',
-  DevOps: 'border-l-orange-500',
-  Data: 'border-l-green-500',
+  Backend: 'border-l-sky-500',
+  Frontend: 'border-l-rose-500',
+  DevOps: 'border-l-amber-500',
+  Data: 'border-l-emerald-500',
   default: 'border-l-gray-300',
 }
 
@@ -60,7 +60,7 @@ export default function SkillCard({ skill, endorsementCount = 0 }: Props) {
         </div>
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-indigo-500 rounded-full"
+            className="h-full bg-orange-400 rounded-full"
             style={{ width: `${skill.score}%` }}
           />
         </div>

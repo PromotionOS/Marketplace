@@ -45,7 +45,7 @@ async function SkillList({ searchParams }: Props) {
         <SearchBar resultCount={skills.length} />
         <Link
           href="/skills/new"
-          className="ml-4 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 whitespace-nowrap"
+          className="ml-4 px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 whitespace-nowrap"
         >
           + Add Skill
         </Link>
