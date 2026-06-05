@@ -34,7 +34,7 @@ export default function SkillCard({ skill, endorsementCount = 0 }: Props) {
   return (
     <Link
       href={`/skills/${skill.id}`}
-      className={`block bg-white rounded-lg border border-gray-200 border-l-4 ${borderColor} p-4 hover:shadow-md transition-shadow`}
+      className={`block bg-white rounded-xl border border-orange-100 border-l-4 ${borderColor} p-4 card-hover elevation-1 animate-fade-up`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
