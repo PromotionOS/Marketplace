@@ -1,254 +1,208 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import { submitSkill } from '@/app/actions/skills'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import SkillSearchInput from '@/components/SkillSearchInput'
+import ProficiencySelect from '@/components/ProficiencySelect'
+import EvidenceInput, { type EvidenceItem } from '@/components/EvidenceInput'
 import LiveScorePreview from '@/components/LiveScorePreview'
-import CustomSelect from '@/components/CustomSelect'
+import { submitSkill } from '@/app/actions/skills'
+import type { ProficiencyAnchor } from '@/lib/types'
 
-const CATEGORY_OPTIONS = [
-  { value: 'Backend',  label: '⚙️ Backend' },
-  { value: 'Frontend', label: '🎨 Frontend' },
-  { value: 'DevOps',   label: '🚀 DevOps' },
-  { value: 'Data',     label: '📊 Data' },
-]
+const CATEGORY_OPTIONS = ['Backend', 'Frontend', 'DevOps', 'Data', 'Mobile', 'Security', 'AI/ML', 'Other'] as const
+type Category = typeof CATEGORY_OPTIONS[number]
 
-const LEVEL_OPTIONS = [
-  { value: 'beginner',   label: 'Beginner' },
-  { value: 'proficient', label: 'Proficient' },
-  { value: 'expert',     label: 'Expert' },
-]
+const EVIDENCE_POINTS: Record<string, number> = {
+  github_pr: 20, shipped_product: 18, certificate: 15,
+  github_repo: 10, article: 8, other: 5,
+}
 
 export default function SkillForm() {
   const router = useRouter()
-  const formRef = useRef<HTMLFormElement>(null)
-  const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
-  const [evidenceUrls, setEvidenceUrls] = useState<string[]>([''])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [descText, setDescText] = useState('')
-  const [yearsExp, setYearsExp] = useState<number | null>(null)
-  const [lastYear, setLastYear] = useState<number | null>(null)
-  const [category, setCategory] = useState('')
-  const [level, setLevel] = useState('')
+  const [skillName, setSkillName] = useState('')
+  const [taxonomyId, setTaxonomyId] = useState<string | null>(null)
+  const [category, setCategory] = useState<Category>('Backend')
+  const [proficiencyAnchor, setProficiencyAnchor] = useState<ProficiencyAnchor | null>(null)
+  const [context, setContext] = useState('')
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([])
+  const [tags, setTags] = useState('')
+  const [isPrimary, setIsPrimary] = useState(false)
+  const [availableToMentor, setAvailableToMentor] = useState(false)
 
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: '',
-    editorProps: {
-      attributes: { class: 'prose prose-sm focus:outline-none min-h-[140px] px-4 py-3 text-gray-700' },
-    },
-    onUpdate: ({ editor }) => setDescText(editor.getText()),
-  })
+  const evidencePoints = Math.min(
+    evidence.reduce((sum, item) => sum + (item.url ? (EVIDENCE_POINTS[item.evidence_type] ?? 5) : 0), 0),
+    50
+  )
 
-  function addTag() {
-    const t = tagInput.trim()
-    if (t && !tags.includes(t)) setTags([...tags, t])
-    setTagInput('')
-  }
-
-  function removeTag(tag: string) {
-    setTags(tags.filter((t) => t !== tag))
-  }
-
-  function addEvidenceUrl() {
-    setEvidenceUrls([...evidenceUrls, ''])
-  }
-
-  function updateEvidenceUrl(index: number, value: string) {
-    const updated = [...evidenceUrls]
-    updated[index] = value
-    setEvidenceUrls(updated)
-  }
-
-  const filledEvidenceCount = evidenceUrls.filter(Boolean).length
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!category || !level) {
-      setError('Please select a category and level')
-      return
-    }
+    if (!skillName.trim()) { setError('Skill name is required'); return }
+    if (!proficiencyAnchor) { setError('Please select your proficiency level'); return }
+    if (context.trim().length < 50) { setError('Please describe what you built (at least 50 characters)'); return }
+
     setSubmitting(true)
     setError(null)
-    const fd = new FormData(e.currentTarget)
-    fd.set('description', editor?.getText() ?? '')
-    fd.set('tags', tags.join(','))
-    fd.set('evidence_urls', evidenceUrls.filter(Boolean).join('\n'))
-    try {
-      await submitSkill(fd)
-      router.push('/skills')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Submission failed')
-    } finally {
+
+    const result = await submitSkill({
+      name: skillName.trim(),
+      category,
+      taxonomy_id: taxonomyId,
+      proficiency_anchor: proficiencyAnchor,
+      context: context.trim(),
+      evidence,
+      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      is_primary: isPrimary,
+      available_to_mentor: availableToMentor,
+    })
+
+    if (result?.error) {
+      setError(result.error)
       setSubmitting(false)
+    } else {
+      router.push('/skills')
+      router.refresh()
     }
   }
 
   return (
-    <div className="flex gap-8 items-start">
-      <form ref={formRef} onSubmit={handleSubmit} className="flex-1 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
+
+        {/* Section 1: What's the skill? */}
+        <div className="bg-white rounded-2xl elevation-1 p-6 space-y-4">
+          <h2 className="text-base font-bold text-gray-900">What&apos;s the skill?</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Skill name</label>
+            <SkillSearchInput
+              value={skillName}
+              taxonomyId={taxonomyId}
+              onChange={(name, tid) => { setSkillName(name); setTaxonomyId(tid) }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORY_OPTIONS.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    category === cat
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Proficiency */}
+        <div className="bg-white rounded-2xl elevation-1 p-6 space-y-4">
+          <h2 className="text-base font-bold text-gray-900">How good are you?</h2>
+          <ProficiencySelect value={proficiencyAnchor} onChange={setProficiencyAnchor} />
+        </div>
+
+        {/* Section 3: Evidence */}
+        <div className="bg-white rounded-2xl elevation-1 p-6 space-y-4">
+          <h2 className="text-base font-bold text-gray-900">What have you built?</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Describe what you&apos;ve built with this skill
+              <span className="ml-1 text-xs text-gray-400 font-normal">(min 50 chars)</span>
+            </label>
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              rows={4}
+              placeholder="e.g. Built a real-time analytics dashboard processing 1M events/day. Designed the schema and wrote all backend services in Go."
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none bg-gray-50"
+            />
+            <p className={`text-xs mt-1 ${context.length >= 50 ? 'text-green-600' : 'text-gray-400'}`}>
+              {context.length} chars {context.length >= 50 ? '✓' : `(${50 - context.length} more needed)`}
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Evidence links</label>
+            <EvidenceInput items={evidence} onChange={setEvidence} />
+          </div>
+        </div>
+
+        {/* Section 4: Extra */}
+        <div className="bg-white rounded-2xl elevation-1 p-6 space-y-4">
+          <h2 className="text-base font-bold text-gray-900">Extra (optional)</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Tags</label>
+            <input
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="distributed-systems, streaming, real-time (comma separated)"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50"
+            />
+          </div>
+          <div className="flex flex-col gap-4">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <button
+                type="button"
+                onClick={() => setIsPrimary(!isPrimary)}
+                className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${isPrimary ? 'bg-orange-500' : 'bg-gray-200'}`}
+              >
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isPrimary ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </button>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Primary skill</p>
+                <p className="text-xs text-gray-500">This is one of your top 3–5 skills</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <button
+                type="button"
+                onClick={() => setAvailableToMentor(!availableToMentor)}
+                className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${availableToMentor ? 'bg-orange-500' : 'bg-gray-200'}`}
+              >
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${availableToMentor ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </button>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Available to mentor</p>
+                <p className="text-xs text-gray-500">Others can reach out to learn from you</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
             {error}
           </div>
         )}
 
-        <div className="bg-white rounded-2xl elevation-1 p-6 space-y-5">
-          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Basic Info</h2>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Skill Name *</label>
-            <input
-              name="name"
-              required
-              placeholder="e.g. React.js, Kubernetes, Data Pipelines"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-gray-50"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
-            <div className="rounded-xl border border-gray-200 bg-gray-50 focus-within:ring-2 focus-within:ring-orange-400 focus-within:border-transparent overflow-hidden">
-              <EditorContent editor={editor} />
-            </div>
-            <p className="text-xs text-gray-400 mt-1.5">
-              {descText.length} chars · {descText.length >= 150 ? '✅ Full points' : descText.length >= 50 ? '⚡ Partial' : '📝 Keep going'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-              <input type="hidden" name="category" value={category} />
-              <CustomSelect
-                value={category}
-                onChange={setCategory}
-                options={CATEGORY_OPTIONS}
-                placeholder="Select category"
-              />
-              {!category && <p className="text-xs text-red-400 mt-1 hidden peer-invalid:block" />}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Level *</label>
-              <input type="hidden" name="level" value={level} />
-              <CustomSelect
-                value={level}
-                onChange={setLevel}
-                options={LEVEL_OPTIONS}
-                placeholder="Select level"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl elevation-1 p-6 space-y-5">
-          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Experience</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Years of Experience</label>
-              <input
-                name="years_experience"
-                type="number"
-                min="0" max="50" step="0.5"
-                placeholder="e.g. 3.5"
-                onChange={(e) => setYearsExp(e.target.value ? parseFloat(e.target.value) : null)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Last Used Year</label>
-              <input
-                name="last_used_year"
-                type="number"
-                min="2000"
-                max={new Date().getFullYear()}
-                placeholder={String(new Date().getFullYear())}
-                onChange={(e) => setLastYear(e.target.value ? parseInt(e.target.value) : null)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
-            <div className="flex gap-2 flex-wrap mb-2">
-              {tags.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full font-medium">
-                  {t}
-                  <button type="button" onClick={() => removeTag(t)} className="hover:text-red-500 ml-0.5">×</button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-                placeholder="Add tag and press Enter"
-                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50"
-              />
-              <button
-                type="button"
-                onClick={addTag}
-                className="px-4 py-2.5 bg-orange-100 text-orange-700 rounded-xl text-sm font-semibold hover:bg-orange-200"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl elevation-1 p-6 space-y-4">
-          <div>
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Evidence</h2>
-            <p className="text-xs text-gray-400 mt-1">Links to PRs, repos, certs, or articles that prove this skill</p>
-          </div>
-          <div className="space-y-2.5">
-            {evidenceUrls.map((url, i) => (
-              <input
-                key={i}
-                value={url}
-                onChange={(e) => updateEvidenceUrl(i, e.target.value)}
-                placeholder={`https://github.com/... (link ${i + 1})`}
-                type="url"
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50"
-              />
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={addEvidenceUrl}
-            className="text-sm text-orange-500 font-semibold hover:text-orange-600 flex items-center gap-1"
-          >
-            <span>+</span> Add another link
-          </button>
-          {filledEvidenceCount >= 3 && (
-            <p className="text-xs text-green-600 font-medium">✅ Full evidence points earned!</p>
-          )}
-        </div>
-
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-3.5 bg-orange-500 text-white rounded-2xl font-bold text-base hover:bg-orange-600 disabled:opacity-50 transition-all elevation-2"
+          className="w-full py-3.5 rounded-xl bg-orange-500 text-white font-bold text-sm hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed elevation-1"
         >
-          {submitting ? 'Submitting…' : 'Submit Skill →'}
+          {submitting ? 'Submitting...' : 'Add Skill →'}
         </button>
       </form>
 
-      <div className="w-64 shrink-0 hidden lg:block">
-        <LiveScorePreview
-          description={descText}
-          evidenceCount={filledEvidenceCount}
-          yearsExperience={yearsExp}
-          lastUsedYear={lastYear}
-        />
+      {/* Live Score Preview */}
+      <div className="hidden lg:block">
+        <div className="sticky top-6">
+          <LiveScorePreview
+            skillName={skillName}
+            category={category}
+            proficiencyAnchor={proficiencyAnchor}
+            evidencePoints={evidencePoints}
+            context={context}
+            isPrimary={isPrimary}
+          />
+        </div>
       </div>
     </div>
   )
